@@ -87,25 +87,9 @@ with open('parameters.json', 'r', encoding='utf-8') as sf:
     data = json.load(sf)
     sf.close()
 
-print(data)
-
 Label(text="Setup your Video", font="Arial 20 bold", bg=bg_c, fg=text_c).grid(row=1, column=0, pady=4)
 
-
-Label(
-    text="Add transitions", font="Arial 15",
-    fg=text_c, bg=bg_c,
-).grid(row=2, column=0, columnspan=1, padx=3, pady=4)
-
-is_transition_i = BooleanVar()
-is_transition_i.set(data['transition'])
-Checkbutton(
-    variable=is_transition_i, text="T/F", fg=text_c,
-    onvalue=1, offvalue=0, width=11, bd=4,
-    relief=FLAT, highlightthickness=0, highlightcolor=text_c,  bg='#3d4047'
-).grid(row=2, column=1)
-
-
+is_transition_i = parameter("Add transitions - 1/0?",  data['transition'], row=2, column=0)
 showcase_scale_i = parameter("Showcase size",  data['scale'], row=3, column=0)
 showcase_speed_i = parameter("Showcase speed", data['speed'], row=4, column=0)
 music_volume_i = parameter("Music volume", data['volume'], row=5, column=0)
