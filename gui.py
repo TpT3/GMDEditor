@@ -607,13 +607,3 @@ class Ui_GMDEditor(object):
         self.videoFPSCombo.setItemText(1, _translate("GMDEditor", "60"))
         self.videoFPSCombo.setItemText(2, _translate("GMDEditor", "120"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.render), _translate("GMDEditor", "Render"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    GMDEditor = QtWidgets.QMainWindow()
-    ui = Ui_GMDEditor()
-    ui.setupUi(GMDEditor)
-    GMDEditor.show()
-    sys.exit(app.exec_())
