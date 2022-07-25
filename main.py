@@ -1,119 +1,103 @@
-from tkinter import *
-from logic import logic
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QIcon
+from gui import Ui_GMDEditor
+from logic import MainLogic
+import sys
 import os
 import json
 
+class GMDEditor(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(GMDEditor, self).__init__()
 
-root = Tk()
-bg_c = '#2F3136'
-root['bg'] = bg_c
-text_c = 'white'
-root.title('GMD Editor')
-root.resizable(width=False, height=False)
+        self.logic = MainLogic()
 
+        self.ui = Ui_GMDEditor()
+        self.ui.setupUi(self)
+        self.setWindowIcon(QIcon('icon.png'))
 
-def parameter(text, default, row=0, column=0):
-    Label(
-        text=text, font="Arial 15",
-        fg=text_c, bg=bg_c,
-    ).grid(row=row, column=column, columnspan=1, padx=3, pady=4)
+        self.ui.foldersButton.clicked.connect(self.setup_folders)
+        self.ui.startButton.clicked.connect(self.start_logic)
 
-    entry = Entry(
-        width=10, bd=4,
-        relief=FLAT,
-        highlightthickness=0,
-        highlightcolor=text_c,
-        fg=text_c, bg='#3d4047'
-    )
-    entry.insert(0, default)
-    entry.grid(row=row, column=column + 1)
+        if os.path.exists('parameters.json'):
+            with open('parameters.json', 'r', encoding='utf-8') as f:
+                s = json.load(f)
 
-    return entry
+                self.ui.addTransitionsCheck.setChecked(s['is_transition'])
+                self.ui.fadeSpeedSpin.setValue(s['fade_speed'])
+                self.ui.transitionDurationSpin.setValue(s['transition_duration'])
+                self.ui.showcaseSizeSpin.setValue(s['showcase_scale'])
+                self.ui.showcaseSpeedSpin.setValue(s['showcase_speed'])
+                self.ui.musicVolumeSpin.setValue(s['music_volume'])
+                self.ui.voiceVolumeSpin.setValue(s['voice_volume'])
+                self.ui.audioNameLine.setText(s['audio_name'])
+                self.ui.videoNameLine.setText(s['video_name'])
+                self.ui.videoQualityCombo.setCurrentText(str(s['height']))
+                self.ui.videoFPSCombo.setCurrentText(str(s['fps']))
 
-
-def check_folder(folder):
-    cwd = os.getcwd()
-    dir = os.path.join(cwd, folder)
-    if not os.path.exists(dir): os.mkdir(dir)
+                f.close()
 
 
-def start_logic():
-    with open('parameters.json', 'w') as wf:
-        wf.write(json.dumps({
-            'transition': is_transition_i.get(),
-            'scale': showcase_scale_i.get(),
-            'speed': showcase_speed_i.get(),
-            'volume': music_volume_i.get(),
-            'fade': fade_speed_i.get(),
-            'height': height_i.get(),
-            'fps': fps_i.get()
-        }))
-        wf.close()
 
-    Label(text=logic(
-        int(is_transition_i.get()),
-        float(showcase_scale_i.get()),
-        float(showcase_speed_i.get()),
-        float(music_volume_i.get()),
-        float(fade_speed_i.get()),
-        int(height_i.get()),
-        int(fps_i.get())
-    ), bg=bg_c, fg=text_c).grid(row=11, column=0, pady=4)
+    def check_folder(self, folder):
+        cwd = os.getcwd()
+        direct = os.path.join(cwd, folder)
+        if not os.path.exists(direct): os.mkdir(direct)
+
+    def setup_folders(self):
+        self.check_folder("Voice")
+        self.check_folder("Showcases")
+        self.check_folder("Music")
+        self.check_folder("TransitionMusic")
+        self.check_folder("TransitionPreview")
+
+    def start_logic(self):
+        self.logic.is_transition = self.ui.addTransitionsCheck.isChecked()
+        self.logic.fade_speed = self.ui.fadeSpeedSpin.value()
+        self.logic.transition_duration = self.ui.transitionDurationSpin.value()
+        self.logic.showcase_scale = self.ui.showcaseSizeSpin.value()
+        self.logic.showcase_speed = self.ui.showcaseSpeedSpin.value()
+        self.logic.music_volume = self.ui.musicVolumeSpin.value()
+        self.logic.voice_volume = self.ui.voiceVolumeSpin.value()
+        self.logic.add_audio = self.ui.audioOutCheck.isChecked()
+        self.logic.add_video = self.ui.videoOutCheck.isChecked()
+        self.logic.audio_name = self.ui.audioNameLine.text()
+        self.logic.video_name = self.ui.videoNameLine.text()
+        self.logic.height = int(self.ui.videoQualityCombo.currentText())
+        self.logic.fps = int(self.ui.videoFPSCombo.currentText())
+
+        with open('parameters.json', 'w') as wf:
+            wf.write(json.dumps({
+                'is_transition': self.logic.is_transition,
+                'fade_speed': self.logic.fade_speed,
+                'transition_duration': self.logic.transition_duration,
+                'showcase_scale': self.logic.showcase_scale,
+                'showcase_speed': self.logic.showcase_speed,
+                'music_volume': self.logic.music_volume,
+                'voice_volume': self.logic.voice_volume,
+                'audio_name': self.logic.audio_name,
+                'video_name': self.logic.video_name,
+                'height': self.logic.height,
+                'fps': self.logic.fps
+            }))
+            wf.close()
+
+        result = QtWidgets.QMessageBox()
+        result.setWindowTitle("Result")
+        result.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        result.setText(self.logic.main())
+
+        if result.text() == "Done!":
+            result.setIcon(QtWidgets.QMessageBox.Information)
+        else:
+            result.setIcon(QtWidgets.QMessageBox.Critical)
+
+        result.exec_()
 
 
-def setup_folders():
-    check_folder("Voice")
-    check_folder("Showcases")
-    check_folder("Music")
-    check_folder("TransitionMusic")
-    check_folder("TransitionPreview")
+app = QtWidgets.QApplication(sys.argv)
+app.setStyle('Windows')
+application = GMDEditor()
+application.show()
 
-
-if not os.path.exists('parameters.json'):
-    with open('parameters.json', 'w') as wf:
-        wf.write(json.dumps({
-            'transition': '1',
-            'scale': '1.3',
-            'speed': '1',
-            'volume': '0.05',
-            'fade': '1',
-            'height': '1080',
-            'fps': '60'
-        }))
-        wf.close()
-
-data = ""
-with open('parameters.json', 'r', encoding='utf-8') as sf:
-    data = json.load(sf)
-    sf.close()
-
-Label(text="Setup your Video", font="Arial 20 bold", bg=bg_c, fg=text_c).grid(row=1, column=0, pady=4)
-
-is_transition_i = parameter("Add transitions - 1/0?",  data['transition'], row=2, column=0)
-showcase_scale_i = parameter("Showcase size",  data['scale'], row=3, column=0)
-showcase_speed_i = parameter("Showcase speed", data['speed'], row=4, column=0)
-music_volume_i = parameter("Music volume", data['volume'], row=5, column=0)
-fade_speed_i = parameter("Fade speed", data['fade'], row=6, column=0)
-
-Label(text="Setup Render", font="Arial 20 bold", bg=bg_c, fg=text_c).grid(row=7, column=0, pady=4)
-
-height_i = parameter("Video width (144, 240, 360 etc.)", data['height'], row=8, column=0)
-fps_i = parameter("Frame rate", data['fps'], row=9, column=0)
-
-sf.close()
-
-Button(
-    text="Start",
-    width=5, height=2,
-    command=start_logic,
-    highlightthickness=0,
-).grid(row=10, column=1, pady=4, padx=4)
-
-Button(
-    text="Setup folders for content",
-    height=2,
-    command=setup_folders,
-    highlightthickness=0,
-).grid(row=10, column=0, pady=4, padx=4)
-
-root.mainloop()
+sys.exit(app.exec())
