@@ -82,7 +82,7 @@ class MainLogic():
         showcases = os.listdir("Showcases")
 
         if len(voices) == 0 or len(showcases) == 0:
-            return "Add content to folders !"
+            return "Add content to folders!"
 
         result = None
         for i in voices:
